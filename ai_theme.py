@@ -76,7 +76,7 @@ AI_CSS = """
 STEPS = [
     ("🧠", "فهم الطلب", "تحليل الوجهة والاهتمامات"),
     ("🔎", "استرجاع الأنشطة", "من قاعدة بيانات SQLite"),
-    ("✨", "النموذج يخطط", "Llama 3.3 عبر LangChain"),
+    ("✨", "النموذج يخطط", "GPT-OSS 120B عبر LangChain"),
     ("🛡️", "التحقق", "رفض أي نشاط مختلق"),
     ("🧮", "حساب الميزانية", "برمجياً لا بالنموذج"),
 ]
@@ -124,7 +124,7 @@ def pipeline_html(active: int | None) -> str:
 
 
 def insight_cards(match_pct: int, n_acts: int, budget_pct: int, attempts: int, source: str) -> None:
-    engine = "Llama 3.3 · Groq" if source == "llm" else ("مخطط احتياطي" if source == "fallback" else "خطة مستوردة")
+    engine = "GPT-OSS 120B · Groq" if source == "llm" else ("مخطط احتياطي" if source == "fallback" else "خطة مستوردة")
     st.markdown(
         "<div class='section-title'>🤖 تحليل المساعد الذكي</div><div class='insight'>"
         f"<div class='ins'><div class='v'>{match_pct}%</div><div class='l'>مطابقة اهتماماتك</div>"

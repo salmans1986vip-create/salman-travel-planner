@@ -116,7 +116,7 @@ st.markdown(
 ai_theme.inject_css()
 
 
-def hero(title: str, subtitle: str, badge: str = "🤖 مدعوم بالذكاء الاصطناعي · LangChain + Llama 3.3",
+def hero(title: str, subtitle: str, badge: str = "🤖 مدعوم بالذكاء الاصطناعي · LangChain + GPT-OSS 120B",
          typing: str | None = None) -> None:
     """يعرض رأس الصفحة المتوهج مع الشبكة العصبية وكرة المساعد."""
     chips = ("<div class='chips'><span class='chip'>📍 <b>3</b> وجهات</span>"
@@ -345,7 +345,7 @@ def main() -> None:
         st.markdown("<div class='section-title'>🧭 مساعد السفر</div>", unsafe_allow_html=True)
         page = st.radio("القائمة", list(pages), key="page", label_visibility="collapsed")
         st.divider()
-        ai_theme.ai_status(service.llm_available, "Llama 3.3")
+        ai_theme.ai_status(service.llm_available, "GPT-OSS 120B")
         st.caption("مشروع مقرر أساسيات LangChain · المجموعة 12\nجامعة الأمير مساعد بن عبدالرحمن")
     pages[page](service)
     st.markdown("<div class='footer'>صنع بواسطة المجموعة 12 · مساعد تخطيط السفر الذكي</div>", unsafe_allow_html=True)
