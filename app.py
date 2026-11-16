@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 import streamlit as st
@@ -18,6 +19,8 @@ from travel_planner.exporter import export_json  # noqa: E402
 from travel_planner.formatting import CATEGORY_AR  # noqa: E402
 from travel_planner.planner import PlanResult, TravelPlannerService  # noqa: E402
 from travel_planner.schemas import SUPPORTED_INTERESTS  # noqa: E402
+
+import ai_theme  # noqa: E402,I001  لمسات الذكاء الاصطناعي في الواجهة
 
 st.set_page_config(page_title="مساعد تخطيط السفر", page_icon="🧳", layout="wide")
 
@@ -110,18 +113,17 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+ai_theme.inject_css()
 
 
-def hero(title: str, subtitle: str, badge: str = "🤖 مدعوم بالذكاء الاصطناعي · LangChain + Llama 3.3") -> None:
-    """يعرض رأس الصفحة المتوهج."""
-    st.markdown(
-        f"<div class='hero'><span class='badge'>{badge}</span><h1>{title}</h1><p>{subtitle}</p>"
-        "<div class='chips'><span class='chip'>📍 <b>3</b> وجهات</span>"
-        "<span class='chip'>🎯 <b>33</b> نشاطاً موثقاً</span>"
-        "<span class='chip'>🧮 ميزانية تحسب بالكود</span>"
-        "<span class='chip'>💬 تعديل بالمحادثة</span></div></div>",
-        unsafe_allow_html=True,
-    )
+def hero(title: str, subtitle: str, badge: str = "🤖 مدعوم بالذكاء الاصطناعي · LangChain + Llama 3.3",
+         typing: str | None = None) -> None:
+    """يعرض رأس الصفحة المتوهج مع الشبكة العصبية وكرة المساعد."""
+    chips = ("<div class='chips'><span class='chip'>📍 <b>3</b> وجهات</span>"
+             "<span class='chip'>🎯 <b>33</b> نشاطاً موثقاً</span>"
+             "<span class='chip'>🧮 ميزانية تحسب بالكود</span>"
+             "<span class='chip'>💬 تعديل بالمحادثة</span></div>")
+    ai_theme.ai_hero(title, subtitle, badge, typing=typing, chips=chips)
 
 
 SOURCE_LABELS = {"llm": "🤖 مولّدة بالنموذج اللغوي", "fallback": "⚙️ خطة احتياطية", "imported": "📥 مستوردة"}
@@ -162,9 +164,17 @@ def render_plan(service: TravelPlannerService, result: PlanResult) -> None:
     for w in result.warnings:
         st.warning(w)
 
-    col_plan, col_budget = st.columns([3, 2], gap="large")
     ids = [i.activity_id for d in result.plan.days for i in d.items]
     acts = service.db.get_activities_by_ids(ids)
+
+    # بطاقة تحليل المساعد: أرقام محسوبة فعلياً من الخطة
+    codes = {SUPPORTED_INTERESTS[i] for i in req.get("interests", []) if i in SUPPORTED_INTERESTS}
+    matched = sum(1 for a in acts.values() if a.get("category") in codes)
+    match_pct = round(100 * matched / len(acts)) if acts and codes else 100
+    budget_pct = round(100 * result.budget.total / result.budget.budget) if result.budget.budget else 0
+    ai_theme.insight_cards(match_pct, len(ids), budget_pct, result.attempts, result.source)
+
+    col_plan, col_budget = st.columns([3, 2], gap="large")
 
     with col_plan:
         for day in result.plan.days:
@@ -201,12 +211,13 @@ def render_chat(service: TravelPlannerService, result: PlanResult) -> None:
     st.markdown("<div class='section-title'>💬 عدّل خطتك بالمحادثة</div>", unsafe_allow_html=True)
     st.caption("أمثلة: «اجعل اليوم الأول أخف» · «استبدل التسوق بنشاط تراثي» · «خطة أوفر»")
     for msg in service.chat_history(result.trip_id):
-        with st.chat_message("user" if msg["role"] == "human" else "assistant"):
+        is_user = msg["role"] == "human"
+        with st.chat_message("user" if is_user else "assistant", avatar="🧑" if is_user else "✨"):
             st.write(msg["content"])
 
     prompt = st.chat_input("اكتب طلب التعديل...")
     if prompt:
-        with st.spinner("جارٍ تعديل الخطة..."):
+        with st.spinner("✨ المساعد الذكي يعيد التفكير في خطتك..."):
             try:
                 st.session_state.result = service.revise_plan(result.trip_id, prompt)
                 st.rerun()
@@ -216,7 +227,8 @@ def render_chat(service: TravelPlannerService, result: PlanResult) -> None:
 
 def page_plan(service: TravelPlannerService) -> None:
     hero("مساعد تخطيط السفر الذكي",
-         "أخبرني بوجهتك وميزانيتك واهتماماتك، وسأبني لك برنامجاً يومياً دقيقاً من أنشطة حقيقية خلال ثوانٍ.")
+         "أخبرني بوجهتك وميزانيتك واهتماماتك، وسأبني لك برنامجاً يومياً دقيقاً من أنشطة حقيقية خلال ثوانٍ.",
+         typing="أفهم طلبك… أسترجع الأنشطة… أخطط… أتحقق… أحسب")
 
     if not service.llm_available:
         st.info("لم يُضبط مفتاح GROQ_API_KEY؛ سيعمل التطبيق بالخطة الاحتياطية دون النموذج اللغوي.")
@@ -238,13 +250,21 @@ def page_plan(service: TravelPlannerService) -> None:
         submitted = st.form_submit_button("✨ أنشئ الخطة", type="primary", use_container_width=True)
 
     if submitted:
-        with st.spinner("يسترجع الأنشطة ويبني الخطة..."):
+        # خط تفكير المساعد: يعرض مراحل المعالجة الفعلية أثناء بناء الخطة
+        board = st.empty()
+        for step in range(2):
+            board.markdown(ai_theme.pipeline_html(step), unsafe_allow_html=True)
+            time.sleep(0.35)
+        board.markdown(ai_theme.pipeline_html(2), unsafe_allow_html=True)
+        with st.spinner("✨ المساعد الذكي يبني خطتك..."):
             try:
                 st.session_state.result = service.create_plan({
                     "destination": dest, "days": days, "travelers": travelers,
                     "budget": budget, "interests": interests, "notes": notes,
                 })
+                board.markdown(ai_theme.pipeline_html(None), unsafe_allow_html=True)
             except Exception as exc:  # noqa: BLE001
+                board.empty()
                 show_error(exc)
 
     result: PlanResult | None = st.session_state.get("result")
@@ -325,7 +345,7 @@ def main() -> None:
         st.markdown("<div class='section-title'>🧭 مساعد السفر</div>", unsafe_allow_html=True)
         page = st.radio("القائمة", list(pages), key="page", label_visibility="collapsed")
         st.divider()
-        st.caption("🟢 النموذج متصل" if service.llm_available else "🟡 يعمل بالخطة الاحتياطية")
+        ai_theme.ai_status(service.llm_available, "Llama 3.3")
         st.caption("مشروع مقرر أساسيات LangChain · المجموعة 12\nجامعة الأمير مساعد بن عبدالرحمن")
     pages[page](service)
     st.markdown("<div class='footer'>صنع بواسطة المجموعة 12 · مساعد تخطيط السفر الذكي</div>", unsafe_allow_html=True)
