@@ -51,7 +51,7 @@ def get_settings() -> Settings:
     db_path = Path(os.getenv("TRAVEL_DB_PATH", PROJECT_ROOT / "data" / "travel_planner.db"))
     return Settings(
         groq_api_key=os.getenv("GROQ_API_KEY"),
-        model_name=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+        model_name=os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
         temperature=float(os.getenv("LLM_TEMPERATURE", "0.3")),
         max_retries=int(os.getenv("LLM_MAX_RETRIES", "2")),
         request_timeout=int(os.getenv("LLM_TIMEOUT", "60")),
