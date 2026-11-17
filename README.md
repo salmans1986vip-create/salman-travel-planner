@@ -11,7 +11,7 @@
 |---|---|
 | الواجهة | Streamlit |
 | التنسيق | LangChain (ChatPromptTemplate، LCEL، PydanticOutputParser، StructuredTool، RunnableWithMessageHistory) |
-| النموذج | Llama 3.3 70B عبر Groq (`langchain-groq`) |
+| النموذج | GPT-OSS 120B عبر Groq (`langchain-groq`) |
 | قاعدة البيانات | SQLite |
 
 ## هيكل المشروع
@@ -49,7 +49,7 @@ streamlit run app.py
 بدون مفتاح يعمل التطبيق بالخطة الاحتياطية، ويوضح ذلك للمستخدم.
 
 ## التشغيل على Google Colab
-افتح الدفتر `Travel_Planner_Colab.ipynb`، وأضف المفتاح في **Secrets** باسم `GROQ_API_KEY`، ثم شغّل الخلايا بالترتيب.
+افتح الدفتر `Travel_Planner_Colab.ipynb` (كل خطوة من المشروع في خلية مستقلة مع شرح وتجربة)، وأضف المفتاح في **Secrets** باسم `GROQ_API_KEY`، ثم شغّل الخلايا بالترتيب.
 
 ## المكتبات والأدوات الخارجية
 LangChain Core، LangChain Groq، Groq API، Streamlit، Pydantic، python-dotenv، SQLite، pytest،
